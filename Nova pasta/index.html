@@ -1,737 +1,743 @@
-    <!DOCTYPE html>
-    <html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="pt-BR">
 
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-        <meta name="theme-color" content="#070b14">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <title>Embalagens Tatuí — Estoque de Fios</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
-            rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-        <link rel="stylesheet" href="style.css">
-    </head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#070b14">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Embalagens Tatuí — Estoque de Fios</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
 
-    <body>
+<body>
 
-        <nav class="sidebar" id="sidebar">
-            <div class="sidebar-brand">
-                <div class="brand-logo">
-                    <div class="brand-icon"><i class="fa fa-wave-square"></i></div>
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-logo">
+                <div class="brand-icon"><i class="fa fa-wave-square"></i></div>
+                <div>
+                    <div class="brand-name">Embalagens Tatuí</div>
+                    <div class="brand-sub">Estoque de Fios</div>
+                </div>
+            </div>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-section-label">Principal</div>
+            <div class="nav-item active" data-page="dash" onclick="navTo('dash',this)"><i class="fa fa-chart-pie"></i>Dashboard</div>
+            <div class="nav-item" data-page="count" onclick="navTo('count',this)"><i class="fa fa-calculator"></i>Contagem</div>
+            <div class="nav-item" data-page="stock" onclick="navTo('stock',this)"><i class="fa fa-boxes-stacked"></i>Estoque <span class="nav-badge" id="crit-badge" style="display:none">0</span></div>
+            <div class="nav-section-label">Historico</div>
+            <div class="nav-item" data-page="cal" onclick="navTo('cal',this)"><i class="fa fa-calendar-days"></i>Calendario</div>
+            <div class="nav-section-label">Exportar</div>
+            <div class="nav-item" data-page="rep" onclick="navTo('rep',this)"><i class="fa fa-file-chart-column"></i>Relatorios</div>
+        </div>
+        <div class="sidebar-footer">
+            <div class="nav-item" onclick="openSheet('sh-settings')"><i class="fa fa-sliders"></i>Configuracoes</div>
+        </div>
+    </nav>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <div class="main">
+        <header class="topbar">
+            <button class="topbar-menu-btn" id="menu-btn" onclick="toggleSidebar()"><i class="fa fa-bars"></i></button>
+            <div class="topbar-info">
+                <div class="topbar-title" id="topbar-title">Dashboard</div>
+                <div class="topbar-sub" id="topbar-date"></div>
+            </div>
+            <div class="topbar-actions">
+                <div class="topbar-day-pill open" id="day-pill" onclick="openCloseDaySheet()">
+                    <i class="fa fa-circle pulse" style="font-size:6px"></i>
+                    <span id="day-pill-txt">Dia Aberto</span>
+                </div>
+                <div class="icon-btn" onclick="openSheet('sh-alerts')" title="Alertas"><i class="fa fa-bell"></i></div>
+            </div>
+        </header>
+
+        <div class="page-content">
+
+            <!-- DASHBOARD -->
+            <div class="page active" id="pg-dash">
+                <div class="page-header fade-up">
+                    <div class="page-header-row">
+                        <div>
+                            <div class="page-title">Dashboard</div>
+                            <div class="page-subtitle" id="dash-greeting"></div>
+                        </div>
+                        <div class="page-actions">
+                            <button class="btn btn-primary btn-sm" onclick="navTo('count',null)"><i class="fa fa-plus"></i>Nova Contagem</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="kpi-grid fade-up-2">
+                    <div class="kpi blue">
+                        <div class="kpi-icon"><i class="fa fa-cubes"></i></div>
+                        <div class="kpi-label">Estoque Total</div>
+                        <div class="kpi-value" id="k-total">--</div>
+                        <div class="kpi-sub">quilogramas</div>
+                    </div>
+                    <div class="kpi green">
+                        <div class="kpi-icon"><i class="fa fa-arrow-trend-down"></i></div>
+                        <div class="kpi-label">Consumo Hoje</div>
+                        <div class="kpi-value" id="k-cons">--</div>
+                        <div class="kpi-sub">kg detectados</div>
+                    </div>
+                    <div class="kpi red">
+                        <div class="kpi-icon"><i class="fa fa-circle-exclamation"></i></div>
+                        <div class="kpi-label">Criticos</div>
+                        <div class="kpi-value" id="k-crit">0</div>
+                        <div class="kpi-sub">requerem atencao</div>
+                    </div>
+                    <div class="kpi amber">
+                        <div class="kpi-icon"><i class="fa fa-pause"></i></div>
+                        <div class="kpi-label">Parados</div>
+                        <div class="kpi-value" id="k-stop">0</div>
+                        <div class="kpi-sub">sem consumo</div>
+                    </div>
+                </div>
+                <div class="grid-main-side fade-up-3">
                     <div>
-                        <div class="brand-name">Embalagens Tatuí</div>
-                        <div class="brand-sub">Estoque de Fios</div>
-                    </div>
-                </div>
-            </div>
-            <div class="sidebar-nav">
-                <div class="nav-section-label">Principal</div>
-                <div class="nav-item active" data-page="dash" onclick="navTo('dash',this)"><i
-                        class="fa fa-chart-pie"></i>Dashboard</div>
-                <div class="nav-item" data-page="count" onclick="navTo('count',this)"><i
-                        class="fa fa-calculator"></i>Contagem</div>
-                <div class="nav-item" data-page="stock" onclick="navTo('stock',this)"><i
-                        class="fa fa-boxes-stacked"></i>Estoque <span class="nav-badge" id="crit-badge"
-                        style="display:none">0</span></div>
-                <div class="nav-section-label">Historico</div>
-                <div class="nav-item" data-page="cal" onclick="navTo('cal',this)"><i
-                        class="fa fa-calendar-days"></i>Calendario</div>
-                <div class="nav-section-label">Exportar</div>
-                <div class="nav-item" data-page="rep" onclick="navTo('rep',this)"><i
-                        class="fa fa-file-chart-column"></i>Relatorios</div>
-            </div>
-            <div class="sidebar-footer">
-                <div class="nav-item" onclick="openSheet('sh-settings')"><i class="fa fa-sliders"></i>Configuracoes</div>
-            </div>
-        </nav>
-        <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
-
-        <div class="main">
-            <header class="topbar">
-                <button class="topbar-menu-btn" id="menu-btn" onclick="toggleSidebar()"><i class="fa fa-bars"></i></button>
-                <div class="topbar-info">
-                    <div class="topbar-title" id="topbar-title">Dashboard</div>
-                    <div class="topbar-sub" id="topbar-date"></div>
-                </div>
-                <div class="topbar-actions">
-                    <div class="topbar-day-pill open" id="day-pill" onclick="openCloseDaySheet()">
-                        <i class="fa fa-circle pulse" style="font-size:6px"></i>
-                        <span id="day-pill-txt">Dia Aberto</span>
-                    </div>
-                    <div class="icon-btn" onclick="openSheet('sh-alerts')" title="Alertas"><i class="fa fa-bell"></i></div>
-                </div>
-            </header>
-
-            <div class="page-content">
-
-                <!-- DASHBOARD -->
-                <div class="page active" id="pg-dash">
-                    <div class="page-header fade-up">
-                        <div class="page-header-row">
-                            <div>
-                                <div class="page-title">Dashboard</div>
-                                <div class="page-subtitle" id="dash-greeting"></div>
-                            </div>
-                            <div class="page-actions">
-                                <button class="btn btn-primary btn-sm" onclick="navTo('count',null)"><i
-                                        class="fa fa-plus"></i>Nova Contagem</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="kpi-grid fade-up-2">
-                        <div class="kpi blue">
-                            <div class="kpi-icon"><i class="fa fa-cubes"></i></div>
-                            <div class="kpi-label">Estoque Total</div>
-                            <div class="kpi-value" id="k-total">--</div>
-                            <div class="kpi-sub">quilogramas</div>
-                        </div>
-                        <div class="kpi green">
-                            <div class="kpi-icon"><i class="fa fa-arrow-trend-down"></i></div>
-                            <div class="kpi-label">Consumo Hoje</div>
-                            <div class="kpi-value" id="k-cons">--</div>
-                            <div class="kpi-sub">kg detectados</div>
-                        </div>
-                        <div class="kpi red">
-                            <div class="kpi-icon"><i class="fa fa-circle-exclamation"></i></div>
-                            <div class="kpi-label">Criticos</div>
-                            <div class="kpi-value" id="k-crit">0</div>
-                            <div class="kpi-sub">requerem atencao</div>
-                        </div>
-                        <div class="kpi amber">
-                            <div class="kpi-icon"><i class="fa fa-pause"></i></div>
-                            <div class="kpi-label">Parados</div>
-                            <div class="kpi-value" id="k-stop">0</div>
-                            <div class="kpi-sub">sem consumo</div>
-                        </div>
-                    </div>
-                    <div class="grid-main-side fade-up-3">
-                        <div>
-                            <div class="card" style="margin-bottom:12px">
-                                <div class="card-header">
-                                    <div class="card-title">Consumo Diario — 7 dias</div>
-                                    <div class="badge badge-blue">kg/dia</div>
-                                </div>
-                                <div class="card-body">
-                                    <div class="chart-container"><canvas id="ch-cons"></canvas></div>
-                                </div>
-                            </div>
-                            <div class="card">
-                                <div class="card-header">
-                                    <div class="card-title">Alertas Ativos</div><span class="badge badge-red"
-                                        id="alert-count-badge">0</span>
-                                </div>
-                                <div class="card-body" id="dash-alerts"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="card" style="margin-bottom:12px">
-                                <div class="card-header">
-                                    <div class="card-title">Mais Consumidos</div>
-                                </div>
-                                <div class="card-body" id="top-threads" style="padding-top:8px"></div>
-                            </div>
-                            <div class="card">
-                                <div class="card-header">
-                                    <div class="card-title">Analise IA Industrial</div><span class="badge badge-blue"><i
-                                            class="fa fa-microchip"></i>IIE</span>
-                                </div>
-                                <div class="card-body">
-                                    <div id="ai-summary-dash" style="font-size:12px;line-height:1.7;color:var(--t2)"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- CONTAGEM -->
-                <div class="page" id="pg-count">
-                    <div class="page-header fade-up">
-                        <div class="page-header-row">
-                            <div>
-                                <div class="page-title">Contagem</div>
-                                <div class="page-subtitle" id="count-date-sub"></div>
-                            </div>
-                            <div id="count-day-pill-wrap"></div>
-                        </div>
-                    </div>
-                    <div id="cnt-selector">
-                        <div class="search-wrap"><i class="fa fa-search"></i><input class="search-input"
-                                placeholder="Buscar fio para contar..." id="cnt-srch" oninput="filterCountList()"></div>
-                        <div id="cnt-list" class="fade-up-2"></div>
-                    </div>
-                    <div id="cnt-iface" style="display:none" class="fade-up">
-                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-                            <button class="btn btn-ghost btn-sm" onclick="clearCntIface()"><i
-                                    class="fa fa-arrow-left"></i>Voltar</button>
-                            <div style="flex:1;min-width:0">
-                                <div style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
-                                    id="cnt-thread-name"></div>
-                                <div style="font-size:10px;color:var(--t3)" id="cnt-thread-meta"></div>
-                            </div>
-                            <div id="cnt-today-badge"></div>
-                        </div>
-                        <div class="count-display">
-                            <div class="count-number" id="cnt-num">0</div>
-                            <div class="count-label">Caixas Totais</div>
-                            <div class="count-weight" id="cnt-kg">0.0 kg</div>
-                            <div class="count-stats">
-                                <div class="count-stat">
-                                    <div class="count-stat-v" id="cs-alt">0</div>
-                                    <div class="count-stat-l">Alturas</div>
-                                </div>
-                                <div class="count-stat">
-                                    <div class="count-stat-v" id="cs-avul">0</div>
-                                    <div class="count-stat-l">Avulsas</div>
-                                </div>
-                                <div class="count-stat">
-                                    <div class="count-stat-v" id="cs-prod">0</div>
-                                    <div class="count-stat-l">Entrada</div>
-                                </div>
-                                <div class="count-stat">
-                                    <div class="count-stat-v" id="cs-bph">--</div>
-                                    <div class="count-stat-l">Cx/Alt</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="toggle-section">
-                            <div class="toggle-header" onclick="toggleSection('sec-alturas')">
-                                <div class="toggle-header-left">
-                                    <div class="toggle-header-icon" style="background:var(--blue-dim);color:var(--blue)"><i
-                                            class="fa fa-layer-group"></i></div>
-                                    <div>
-                                        <div class="toggle-header-title">Adicionar Alturas</div>
-                                        <div class="toggle-header-meta" id="sec-alturas-meta">Toque para expandir</div>
-                                    </div>
-                                </div>
-                                <i class="fa fa-chevron-down toggle-chevron open" id="chev-sec-alturas"></i>
-                            </div>
-                            <div class="toggle-body open" id="sec-alturas">
-                                <div class="count-btn-grid count-btn-grid-4" style="margin-bottom:8px">
-                                    <button class="count-btn" onclick="addH(1)">+1H</button>
-                                    <button class="count-btn" onclick="addH(2)">+2H</button>
-                                    <button class="count-btn" onclick="addH(5)">+5H</button>
-                                    <button class="count-btn blue" onclick="addH(10)">+10H</button>
-                                </div>
-                                <div class="count-btn-grid count-btn-grid-2">
-                                    <button class="count-btn red"
-                                        onclick="if(cntH>0){cntStack.push({t:'h',n:-1});cntH=Math.max(0,cntH-1);updateCountDisplay()}">−1H</button>
-                                    <button class="count-btn amber"
-                                        onclick="if(cntH>0){cntStack.push({t:'h',n:-5});cntH=Math.max(0,cntH-5);updateCountDisplay()}">−5H</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="toggle-section">
-                            <div class="toggle-header" onclick="toggleSection('sec-avulsas')">
-                                <div class="toggle-header-left">
-                                    <div class="toggle-header-icon" style="background:var(--green-dim);color:var(--green)">
-                                        <i class="fa fa-box"></i>
-                                    </div>
-                                    <div>
-                                        <div class="toggle-header-title">Caixas Avulsas</div>
-                                        <div class="toggle-header-meta" id="sec-avulsas-meta">Caixas fora das alturas</div>
-                                    </div>
-                                </div>
-                                <i class="fa fa-chevron-down toggle-chevron" id="chev-sec-avulsas"></i>
-                            </div>
-                            <div class="toggle-body" id="sec-avulsas">
-                                <div class="count-btn-grid count-btn-grid-4" style="margin-bottom:8px">
-                                    <button class="count-btn" onclick="addL(1)">+1</button>
-                                    <button class="count-btn" onclick="addL(3)">+3</button>
-                                    <button class="count-btn" onclick="addL(5)">+5</button>
-                                    <button class="count-btn blue" onclick="addL(10)">+10</button>
-                                </div>
-                                <div class="count-btn-grid count-btn-grid-2">
-                                    <button class="count-btn red"
-                                        onclick="if(cntL>0){cntStack.push({t:'l',n:-1});cntL=Math.max(0,cntL-1);updateCountDisplay()}">−1</button>
-                                    <button class="count-btn amber"
-                                        onclick="if(cntL>0){cntStack.push({t:'l',n:-3});cntL=Math.max(0,cntL-3);updateCountDisplay()}">−3</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="toggle-section">
-                            <div class="toggle-header" onclick="toggleSection('sec-producao')">
-                                <div class="toggle-header-left">
-                                    <div class="toggle-header-icon" style="background:var(--amber-dim);color:var(--amber)">
-                                        <i class="fa fa-plus-circle"></i>
-                                    </div>
-                                    <div>
-                                        <div class="toggle-header-title">Entrada / Producao</div>
-                                        <div class="toggle-header-meta">Caixas recebidas ou produzidas</div>
-                                    </div>
-                                </div>
-                                <i class="fa fa-chevron-down toggle-chevron" id="chev-sec-producao"></i>
-                            </div>
-                            <div class="toggle-body" id="sec-producao">
-                                <div class="prod-input-row">
-                                    <input class="form-input" type="number" id="prod-inp" placeholder="Quantidade de caixas"
-                                        min="0">
-                                    <button class="btn btn-amber btn-sm" onclick="addProd()"><i
-                                            class="fa fa-plus"></i>Adicionar</button>
-                                </div>
-                                <div class="form-hint" style="margin-top:5px">Essas caixas serao somadas ao total do estoque
-                                </div>
-                            </div>
-                        </div>
-                        <div class="toggle-section">
-                            <div class="toggle-header" onclick="toggleSection('sec-mistas')">
-                                <div class="toggle-header-left">
-                                    <div class="toggle-header-icon"
-                                        style="background:var(--purple-dim);color:var(--purple)"><i
-                                            class="fa fa-shuffle"></i></div>
-                                    <div>
-                                        <div class="toggle-header-title">Caixas Mistas</div>
-                                        <div class="toggle-header-meta">Dividir peso entre 2 fios</div>
-                                    </div>
-                                </div>
-                                <i class="fa fa-chevron-down toggle-chevron" id="chev-sec-mistas"></i>
-                            </div>
-                            <div class="toggle-body" id="sec-mistas">
-                                <div style="font-size:11px;color:var(--t3);margin-bottom:10px;line-height:1.5">Quando caixas
-                                    chegam com dois fios misturados, divida o peso proporcionalmente.</div>
-                                <div style="margin-bottom:8px">
-                                    <div class="form-label">Caixas mistas</div><input class="form-input mono" type="number"
-                                        id="mix-qty" placeholder="Qtd. de caixas mistas" min="1"
-                                        oninput="updateMixedPreview()">
-                                </div>
-                                <div style="margin-bottom:8px">
-                                    <div class="form-label">Outro fio (recebe metade)</div><select class="form-input"
-                                        id="mix-thread" onchange="updateMixedPreview()">
-                                        <option value="">Selecione o fio...</option>
-                                    </select>
-                                </div>
-                                <div style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-end">
-                                    <div style="flex:1">
-                                        <div class="form-label">% para este fio</div><input class="form-input mono"
-                                            type="number" id="mix-pct" value="50" min="1" max="99"
-                                            oninput="updateMixedPreview()">
-                                    </div>
-                                    <div style="flex:1">
-                                        <div class="form-label">% para o outro</div><input class="form-input mono"
-                                            type="number" id="mix-pct2" value="50" readonly style="opacity:.6">
-                                    </div>
-                                </div>
-                                <div id="mix-preview" style="display:none" class="mixed-result"></div>
-                                <button class="btn btn-purple btn-block" style="margin-top:8px" onclick="applyMixed()"><i
-                                        class="fa fa-shuffle"></i>Aplicar Divisao</button>
-                            </div>
-                        </div>
-                        <div style="display:flex;gap:8px;margin-top:10px;margin-bottom:10px">
-                            <button class="btn btn-danger btn-sm" style="flex:1" onclick="undoAction()"><i
-                                    class="fa fa-rotate-left"></i>Desfazer</button>
-                            <button class="btn btn-ghost btn-sm" style="flex:1" onclick="resetCount()"><i
-                                    class="fa fa-xmark"></i>Zerar</button>
-                        </div>
-                        <button class="btn btn-primary btn-block" style="margin-bottom:10px" onclick="saveCount()"><i
-                                class="fa fa-check"></i>Salvar Contagem</button>
-                        <div style="border-top:1px solid var(--border);padding-top:12px">
-                            <button class="close-day-btn open-state" id="close-day-btn" onclick="openCloseDaySheet()"><i
-                                    class="fa fa-lock"></i>Fechar o Dia de Hoje</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ESTOQUE -->
-                <div class="page" id="pg-stock">
-                    <div class="page-header fade-up">
-                        <div class="page-header-row">
-                            <div>
-                                <div class="page-title">Estoque</div>
-                                <div class="page-subtitle" id="stock-sub"></div>
-                            </div>
-                            <div class="page-actions"><button class="btn btn-primary btn-sm" onclick="openAddThread()"><i
-                                        class="fa fa-plus"></i>Novo Fio</button></div>
-                        </div>
-                    </div>
-                    <div class="fade-up-2">
-                        <div class="search-wrap"><i class="fa fa-search"></i><input class="search-input"
-                                placeholder="Buscar fio..." id="st-srch" oninput="renderStock()"></div>
-                        <div class="chips-row" id="st-chips">
-                            <div class="chip active" onclick="setFilter('all',this)">Todos</div>
-                            <div class="chip" onclick="setFilter('normal',this)">Normal</div>
-                            <div class="chip" onclick="setFilter('low',this)">Baixo</div>
-                            <div class="chip" onclick="setFilter('critical',this)">Critico</div>
-                            <div class="chip" onclick="setFilter('stopped',this)">Parado</div>
-                        </div>
-                        <div id="st-list"></div>
-                    </div>
-                </div>
-
-                <!-- CALENDARIO -->
-                <div class="page" id="pg-cal">
-                    <div class="page-header fade-up">
-                        <div class="page-header-row">
-                            <div>
-                                <div class="page-title">Calendario</div>
-                                <div class="page-subtitle">Historico de contagens</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="fade-up-2">
-                        <div class="date-search-wrap"><i class="fa fa-calendar"></i><input class="date-search" type="date"
-                                id="date-search" onchange="jumpToDate()" title="Ir para data"></div>
                         <div class="card" style="margin-bottom:12px">
+                            <div class="card-header">
+                                <div class="card-title">Consumo Diario — 7 dias</div>
+                                <div class="badge badge-blue">kg/dia</div>
+                            </div>
                             <div class="card-body">
-                                <div class="cal-nav">
-                                    <button class="cal-nav-btn" onclick="prevM()"><i
-                                            class="fa fa-chevron-left"></i></button>
-                                    <div style="display:flex;align-items:center;gap:8px">
-                                        <div class="cal-month" id="cal-month-title"></div>
-                                        <div class="cal-view-toggle">
-                                            <div class="cal-vbtn active" id="vbtn-month" onclick="setCalView('month',this)">
-                                                Mes</div>
-                                            <div class="cal-vbtn" id="vbtn-week" onclick="setCalView('week',this)">Sem.
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button class="cal-nav-btn" onclick="nextM()"><i
-                                            class="fa fa-chevron-right"></i></button>
-                                </div>
-                                <div id="cal-month-view">
-                                    <div class="cal-grid" id="cal-grid">
-                                        <div class="cal-day-header">Dom</div>
-                                        <div class="cal-day-header">Seg</div>
-                                        <div class="cal-day-header">Ter</div>
-                                        <div class="cal-day-header">Qua</div>
-                                        <div class="cal-day-header">Qui</div>
-                                        <div class="cal-day-header">Sex</div>
-                                        <div class="cal-day-header">Sab</div>
-                                    </div>
-                                </div>
-                                <div id="cal-week-view" style="display:none">
-                                    <div class="week-view" id="week-grid"></div>
-                                </div>
-                                <div class="cal-legend">
-                                    <div class="cal-legend-item">
-                                        <div class="cal-legend-dot"
-                                            style="background:var(--bg3);border:1px solid var(--border)"></div>Com dados
-                                    </div>
-                                    <div class="cal-legend-item">
-                                        <div class="cal-legend-dot"
-                                            style="background:rgba(16,185,129,.1);border:1px solid var(--green-border)">
-                                        </div>Fechado
-                                    </div>
-                                    <div class="cal-legend-item">
-                                        <div class="cal-legend-dot"
-                                            style="background:var(--blue-dim);border:1px solid var(--blue-border)"></div>
-                                        Hoje
-                                    </div>
-                                </div>
+                                <div class="chart-container"><canvas id="ch-cons"></canvas></div>
                             </div>
                         </div>
-                        <div class="section-label">Historico Recente</div>
                         <div class="card">
-                            <div class="card-body" id="cal-hist"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- RELATORIOS -->
-                <div class="page" id="pg-rep">
-                    <div class="page-header fade-up">
-                        <div class="page-header-row">
-                            <div>
-                                <div class="page-title">Relatorios</div>
-                                <div class="page-subtitle">Exportacao e analises</div>
+                            <div class="card-header">
+                                <div class="card-title">Alertas Ativos</div><span class="badge badge-red" id="alert-count-badge">0</span>
                             </div>
+                            <div class="card-body" id="dash-alerts"></div>
                         </div>
                     </div>
-                    <div class="fade-up-2 rep-layout">
-                        <div>
-                            <div class="card" style="margin-bottom:12px">
-                                <div class="card-header">
-                                    <div class="card-title">Resumo Atual</div>
-                                </div>
-                                <div class="card-body">
-                                    <div class="stat-grid" id="rep-stats"></div>
-                                    <div class="chart-container"><canvas id="ch-rep"></canvas></div>
-                                </div>
-                            </div>
-                            <div class="card" style="margin-bottom:12px">
-                                <div class="card-header">
-                                    <div class="card-title">Tabela de Estoque</div><span class="badge badge-gray"
-                                        id="rep-total-badge">0 fios</span>
-                                </div>
-                                <div class="card-body" style="padding:0">
-                                    <div class="rep-table-wrap">
-                                        <table class="rep-table" id="rep-table-main">
-                                            <thead>
-                                                <tr>
-                                                    <th>Fio</th>
-                                                    <th>Estoque</th>
-                                                    <th>Cons/dia</th>
-                                                    <th>7 dias</th>
-                                                    <th>Previsao</th>
-                                                    <th>Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="rep-table-body"></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card">
-                                <div class="card-header">
-                                    <div class="card-title">Exportar PDF</div>
-                                </div>
-                                <div class="card-body">
-                                    <div class="tabs" id="rep-tabs">
-                                        <div class="tab active" onclick="setPeriod('day',this)">Diario</div>
-                                        <div class="tab" onclick="setPeriod('week',this)">Semanal</div>
-                                        <div class="tab" onclick="setPeriod('month',this)">Mensal</div>
-                                    </div>
-                                    <div class="report-card" onclick="genReport('full')">
-                                        <div class="report-icon" style="background:var(--blue-dim);color:var(--blue)"><i
-                                                class="fa fa-chart-bar"></i></div>
-                                        <div class="report-info">
-                                            <div class="report-title">Relatorio Completo</div>
-                                            <div class="report-desc">Estoque, consumo, alertas e previsoes</div>
-                                        </div><i class="fa fa-chevron-right report-arrow"></i>
-                                    </div>
-                                    <div class="report-card" onclick="genReport('consumption')">
-                                        <div class="report-icon" style="background:var(--green-dim);color:var(--green)"><i
-                                                class="fa fa-chart-line"></i></div>
-                                        <div class="report-info">
-                                            <div class="report-title">Historico de Consumo</div>
-                                            <div class="report-desc">Evolucao diaria e tendencias</div>
-                                        </div><i class="fa fa-chevron-right report-arrow"></i>
-                                    </div>
-                                    <div class="report-card" onclick="genReport('critical')">
-                                        <div class="report-icon" style="background:var(--red-dim);color:var(--red)"><i
-                                                class="fa fa-triangle-exclamation"></i></div>
-                                        <div class="report-info">
-                                            <div class="report-title">Fios Criticos</div>
-                                            <div class="report-desc">Alertas e previsao de falta</div>
-                                        </div><i class="fa fa-chevron-right report-arrow"></i>
-                                    </div>
-                                    <div class="report-card" onclick="genReport('forecast')">
-                                        <div class="report-icon" style="background:var(--amber-dim);color:var(--amber)"><i
-                                                class="fa fa-clock-rotate-left"></i></div>
-                                        <div class="report-info">
-                                            <div class="report-title">Previsao de Estoque</div>
-                                            <div class="report-desc">Duracao estimada por fio</div>
-                                        </div><i class="fa fa-chevron-right report-arrow"></i>
-                                    </div>
-                                    <div class="report-card" onclick="genReport('movements')">
-                                        <div class="report-icon" style="background:var(--purple-dim);color:var(--purple)"><i
-                                                class="fa fa-arrow-right-arrow-left"></i></div>
-                                        <div class="report-info">
-                                            <div class="report-title">Movimentacoes</div>
-                                            <div class="report-desc">Entradas e saidas detectadas</div>
-                                        </div><i class="fa fa-chevron-right report-arrow"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="card">
-                                <div class="card-header">
-                                    <div class="card-title">Analise IIE</div><span class="badge badge-blue"><i
-                                            class="fa fa-microchip"></i></span>
-                                </div>
-                                <div class="card-body">
-                                    <div id="rep-ai"
-                                        style="font-size:12px;line-height:1.7;color:var(--t2);margin-bottom:14px"></div>
-                                    <div class="section-label">Por Fio</div>
-                                    <div id="rep-thread-list"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <nav class="mob-nav" id="mob-nav">
-            <div class="mob-nav-inner">
-                <div class="mob-nav-item active" data-page="dash" onclick="navTo('dash',this)"><i
-                        class="fa fa-chart-pie"></i><span>Dashboard</span></div>
-                <div class="mob-nav-item" data-page="count" onclick="navTo('count',this)"><i
-                        class="fa fa-calculator"></i><span>Contagem</span></div>
-                <div class="mob-nav-item" data-page="stock" onclick="navTo('stock',this)"><i
-                        class="fa fa-boxes-stacked"></i><span>Estoque</span></div>
-                <div class="mob-nav-item" data-page="cal" onclick="navTo('cal',this)"><i
-                        class="fa fa-calendar-days"></i><span>Calendario</span></div>
-                <div class="mob-nav-item" data-page="rep" onclick="navTo('rep',this)"><i
-                        class="fa fa-file-pdf"></i><span>Relat.</span></div>
-            </div>
-        </nav>
-
-        <div class="overlay" id="overlay" onclick="closeSheet()"></div>
-
-        <!-- ADD/EDIT THREAD -->
-        <div class="sheet" id="sh-thread">
-            <div class="sheet-handle"></div>
-            <div class="sheet-header">
-                <div class="sheet-title" id="sh-thread-title">Cadastrar Fio</div><button class="icon-btn"
-                    onclick="closeSheet()"><i class="fa fa-xmark"></i></button>
-            </div>
-            <div class="sheet-body">
-                <div class="form-group"><label class="form-label">Nome do Fio</label><input class="form-input" id="inp-name"
-                        placeholder="Ex: Fio Nylon 0.25mm" autocomplete="off"></div>
-                <div class="form-row">
-                    <div class="form-group"><label class="form-label">Peso por Caixa (kg)</label><input
-                            class="form-input mono" type="number" id="inp-wpb" placeholder="25" step="0.1" min="0.1"
-                            oninput="updatePreview()"></div>
-                    <div class="form-group"><label class="form-label">Caixas por Altura</label><input
-                            class="form-input mono" type="number" id="inp-bph" placeholder="4" step="1" min="1"
-                            oninput="updatePreview()"></div>
-                </div>
-                <div id="thread-preview" style="display:none;margin-bottom:12px">
-                    <div class="card" style="border-color:var(--blue-border)">
-                        <div class="card-body" style="padding:10px 12px">
-                            <div class="section-label" style="margin-bottom:6px">Previsao de calculo</div>
-                            <div class="info-row"><span class="info-label">1 altura =</span><span class="info-value"
-                                    id="prev-1h">--</span></div>
-                            <div class="info-row"><span class="info-label">Palete (10 alt.) =</span><span class="info-value"
-                                    id="prev-pal">--</span></div>
-                        </div>
-                    </div>
-                </div>
-                <div id="edit-recalc-warn" style="display:none;margin-bottom:12px">
-                    <div class="alert-item alert-amber"><i class="fa fa-triangle-exclamation alert-icon"></i>
-                        <div>
-                            <div class="alert-title">Recalculo automatico</div>
-                            <div class="alert-desc">Ao alterar o peso por caixa, todas as contagens historicas deste fio
-                                serao recalculadas automaticamente.</div>
-                        </div>
-                    </div>
-                </div>
-                <button class="btn btn-primary btn-block" id="sh-thread-save-btn" onclick="saveThread()"><i
-                        class="fa fa-check"></i>Salvar</button>
-                <button class="btn btn-danger btn-block" id="sh-thread-del-btn" style="margin-top:8px;display:none"
-                    onclick="deleteThread()"><i class="fa fa-trash"></i>Excluir Fio</button>
-            </div>
-        </div>
-
-        <!-- THREAD DETAIL -->
-        <div class="sheet" id="sh-detail">
-            <div class="sheet-handle"></div>
-            <div class="sheet-header">
-                <div>
-                    <div class="sheet-title" id="det-name"></div>
-                    <div style="font-size:11px;color:var(--t3);margin-top:2px" id="det-meta"></div>
-                </div>
-                <div style="display:flex;gap:6px"><button class="icon-btn" onclick="editCurrentThread()" title="Editar"><i
-                            class="fa fa-pen" style="color:var(--blue)"></i></button><button class="icon-btn"
-                        onclick="closeSheet()"><i class="fa fa-xmark"></i></button></div>
-            </div>
-            <div class="sheet-body">
-                <div class="grid-2" style="margin-bottom:12px">
-                    <div class="kpi blue" style="padding:12px">
-                        <div class="kpi-label">Estoque</div>
-                        <div class="kpi-value" style="font-size:20px" id="det-stock">--</div>
-                        <div class="kpi-sub">kg</div>
-                    </div>
-                    <div class="kpi green" style="padding:12px">
-                        <div class="kpi-label">Previsao</div>
-                        <div class="kpi-value" style="font-size:20px" id="det-days">--</div>
-                        <div class="kpi-sub">dias restantes</div>
-                    </div>
-                </div>
-                <div class="card" style="margin-bottom:12px">
-                    <div class="card-body" style="padding:12px">
-                        <div class="section-label">Analise IIE</div>
-                        <div class="info-row"><span class="info-label">Consumo medio/dia</span><span class="info-value"
-                                id="det-avg">--</span></div>
-                        <div class="info-row"><span class="info-label">Media semanal</span><span class="info-value"
-                                id="det-wkly">--</span></div>
-                        <div class="info-row"><span class="info-label">Status</span><span id="det-badge"></span></div>
-                        <div class="info-row"><span class="info-label">Classificacao</span><span class="info-value"
-                                id="det-cls">--</span></div>
-                    </div>
-                </div>
-                <div class="card" style="margin-bottom:12px">
-                    <div class="card-body" style="padding:12px">
-                        <div class="section-label">Evolucao do Estoque</div>
-                        <div class="chart-container" style="height:120px"><canvas id="det-chart"></canvas></div>
-                    </div>
-                </div>
-                <button class="btn btn-primary btn-block" onclick="startCountForThread();closeSheet()"><i
-                        class="fa fa-calculator"></i>Iniciar Contagem</button>
-            </div>
-        </div>
-
-        <!-- CALENDAR DAY -->
-        <div class="sheet" id="sh-calday">
-            <div class="sheet-handle"></div>
-            <div class="sheet-header">
-                <div>
-                    <div class="sheet-title" id="calday-title"></div>
-                    <div id="calday-status" style="margin-top:4px"></div>
-                </div><button class="icon-btn" onclick="closeSheet()"><i class="fa fa-xmark"></i></button>
-            </div>
-            <div class="sheet-body" id="calday-body"></div>
-        </div>
-
-        <!-- ALERTS -->
-        <div class="sheet" id="sh-alerts">
-            <div class="sheet-handle"></div>
-            <div class="sheet-header">
-                <div class="sheet-title">Central de Alertas</div><button class="icon-btn" onclick="closeSheet()"><i
-                        class="fa fa-xmark"></i></button>
-            </div>
-            <div class="sheet-body" id="sh-alerts-body"></div>
-        </div>
-
-        <!-- CLOSE DAY -->
-        <div class="sheet" id="sh-closeday">
-            <div class="sheet-handle"></div>
-            <div class="sheet-header">
-                <div class="sheet-title">Fechar Dia</div><button class="icon-btn" onclick="closeSheet()"><i
-                        class="fa fa-xmark"></i></button>
-            </div>
-            <div class="sheet-body">
-                <div class="alert-item alert-green" style="margin-bottom:12px"><i class="fa fa-circle-check alert-icon"></i>
                     <div>
-                        <div class="alert-title">Confirmar fechamento</div>
-                        <div class="alert-desc" id="cd-date-lbl"></div>
+                        <div class="card" style="margin-bottom:12px">
+                            <div class="card-header">
+                                <div class="card-title">Mais Consumidos</div>
+                            </div>
+                            <div class="card-body" id="top-threads" style="padding-top:8px"></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Analise IA Industrial</div><span class="badge badge-blue"><i class="fa fa-microchip"></i>IIE</span>
+                            </div>
+                            <div class="card-body">
+                                <div id="ai-summary-dash" style="font-size:12px;line-height:1.7;color:var(--t2)"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <p style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:12px">Ao fechar o dia, as contagens
-                    ficam definitivas. Amanha a contagem comecara zerada, e o consumo sera calculado automaticamente.</p>
-                <div id="cd-summary" style="margin-bottom:14px"></div>
-                <button class="btn btn-success btn-block" onclick="confirmCloseDay()"><i class="fa fa-lock"></i>Confirmar
-                    Fechamento</button>
-                <button class="btn btn-ghost btn-block" style="margin-top:8px" onclick="closeSheet()">Cancelar</button>
+            </div>
+
+            <!-- CONTAGEM -->
+            <div class="page" id="pg-count">
+                <div class="page-header fade-up">
+                    <div class="page-header-row">
+                        <div>
+                            <div class="page-title">Contagem</div>
+                            <div class="page-subtitle" id="count-date-sub"></div>
+                        </div>
+                        <div id="count-day-pill-wrap"></div>
+                    </div>
+                </div>
+                <div id="cnt-selector">
+                    <div class="search-wrap"><i class="fa fa-search"></i><input class="search-input" placeholder="Buscar fio para contar..." id="cnt-srch" oninput="filterCountList()"></div>
+                    <div id="cnt-list" class="fade-up-2"></div>
+                </div>
+                <div id="cnt-iface" style="display:none" class="fade-up">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                        <button class="btn btn-ghost btn-sm" onclick="clearCntIface()"><i class="fa fa-arrow-left"></i>Voltar</button>
+                        <div style="flex:1;min-width:0">
+                            <div style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="cnt-thread-name"></div>
+                            <div style="font-size:10px;color:var(--t3)" id="cnt-thread-meta"></div>
+                        </div>
+                        <div id="cnt-today-badge"></div>
+                    </div>
+                    <div class="count-display">
+                        <div class="count-number" id="cnt-num">0</div>
+                        <div class="count-label">Caixas Totais</div>
+                        <div class="count-weight" id="cnt-kg">0.0 kg</div>
+                        <div class="count-stats">
+                            <div class="count-stat"><div class="count-stat-v" id="cs-alt">0</div><div class="count-stat-l">Alturas</div></div>
+                            <div class="count-stat"><div class="count-stat-v" id="cs-avul">0</div><div class="count-stat-l">Avulsas</div></div>
+                            <div class="count-stat"><div class="count-stat-v" id="cs-prod">0</div><div class="count-stat-l">Entrada</div></div>
+                            <div class="count-stat"><div class="count-stat-v" id="cs-bph">--</div><div class="count-stat-l">Cx/Alt</div></div>
+                        </div>
+                    </div>
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleSection('sec-alturas')">
+                            <div class="toggle-header-left">
+                                <div class="toggle-header-icon" style="background:var(--blue-dim);color:var(--blue)"><i class="fa fa-layer-group"></i></div>
+                                <div>
+                                    <div class="toggle-header-title">Adicionar Alturas</div>
+                                    <div class="toggle-header-meta" id="sec-alturas-meta">Toque para expandir</div>
+                                </div>
+                            </div>
+                            <i class="fa fa-chevron-down toggle-chevron open" id="chev-sec-alturas"></i>
+                        </div>
+                        <div class="toggle-body open" id="sec-alturas">
+                            <div class="count-btn-grid count-btn-grid-4" style="margin-bottom:8px">
+                                <button class="count-btn" onclick="addH(1)">+1H</button>
+                                <button class="count-btn" onclick="addH(2)">+2H</button>
+                                <button class="count-btn" onclick="addH(5)">+5H</button>
+                                <button class="count-btn blue" onclick="addH(10)">+10H</button>
+                            </div>
+                            <div class="count-btn-grid count-btn-grid-2">
+                                <button class="count-btn red" onclick="if(cntH>0){cntStack.push({t:'h',n:-1});cntH=Math.max(0,cntH-1);updateCountDisplay()}">−1H</button>
+                                <button class="count-btn amber" onclick="if(cntH>0){cntStack.push({t:'h',n:-5});cntH=Math.max(0,cntH-5);updateCountDisplay()}">−5H</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleSection('sec-avulsas')">
+                            <div class="toggle-header-left">
+                                <div class="toggle-header-icon" style="background:var(--green-dim);color:var(--green)"><i class="fa fa-box"></i></div>
+                                <div>
+                                    <div class="toggle-header-title">Caixas Avulsas</div>
+                                    <div class="toggle-header-meta" id="sec-avulsas-meta">Caixas fora das alturas</div>
+                                </div>
+                            </div>
+                            <i class="fa fa-chevron-down toggle-chevron" id="chev-sec-avulsas"></i>
+                        </div>
+                        <div class="toggle-body" id="sec-avulsas">
+                            <div class="count-btn-grid count-btn-grid-4" style="margin-bottom:8px">
+                                <button class="count-btn" onclick="addL(1)">+1</button>
+                                <button class="count-btn" onclick="addL(3)">+3</button>
+                                <button class="count-btn" onclick="addL(5)">+5</button>
+                                <button class="count-btn blue" onclick="addL(10)">+10</button>
+                            </div>
+                            <div class="count-btn-grid count-btn-grid-2">
+                                <button class="count-btn red" onclick="if(cntL>0){cntStack.push({t:'l',n:-1});cntL=Math.max(0,cntL-1);updateCountDisplay()}">−1</button>
+                                <button class="count-btn amber" onclick="if(cntL>0){cntStack.push({t:'l',n:-3});cntL=Math.max(0,cntL-3);updateCountDisplay()}">−3</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleSection('sec-producao')">
+                            <div class="toggle-header-left">
+                                <div class="toggle-header-icon" style="background:var(--amber-dim);color:var(--amber)"><i class="fa fa-plus-circle"></i></div>
+                                <div>
+                                    <div class="toggle-header-title">Entrada / Producao</div>
+                                    <div class="toggle-header-meta">Caixas recebidas ou produzidas</div>
+                                </div>
+                            </div>
+                            <i class="fa fa-chevron-down toggle-chevron" id="chev-sec-producao"></i>
+                        </div>
+                        <div class="toggle-body" id="sec-producao">
+                            <div class="prod-input-row">
+                                <input class="form-input" type="number" id="prod-inp" placeholder="Quantidade de caixas" min="0">
+                                <button class="btn btn-amber btn-sm" onclick="addProd()"><i class="fa fa-plus"></i>Adicionar</button>
+                            </div>
+                            <div class="form-hint" style="margin-top:5px">Essas caixas serao somadas ao total do estoque</div>
+                        </div>
+                    </div>
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleSection('sec-mistas')">
+                            <div class="toggle-header-left">
+                                <div class="toggle-header-icon" style="background:var(--purple-dim);color:var(--purple)"><i class="fa fa-shuffle"></i></div>
+                                <div>
+                                    <div class="toggle-header-title">Caixas Mistas</div>
+                                    <div class="toggle-header-meta">Dividir peso entre 2 fios</div>
+                                </div>
+                            </div>
+                            <i class="fa fa-chevron-down toggle-chevron" id="chev-sec-mistas"></i>
+                        </div>
+                        <div class="toggle-body" id="sec-mistas">
+                            <div style="font-size:11px;color:var(--t3);margin-bottom:10px;line-height:1.5">Quando caixas chegam com dois fios misturados, divida o peso proporcionalmente.</div>
+                            <div style="margin-bottom:8px">
+                                <div class="form-label">Caixas mistas</div>
+                                <input class="form-input mono" type="number" id="mix-qty" placeholder="Qtd. de caixas mistas" min="1" oninput="updateMixedPreview()">
+                            </div>
+                            <div style="margin-bottom:8px">
+                                <div class="form-label">Outro fio (recebe metade)</div>
+                                <select class="form-input" id="mix-thread" onchange="updateMixedPreview()">
+                                    <option value="">Selecione o fio...</option>
+                                </select>
+                            </div>
+                            <div style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-end">
+                                <div style="flex:1">
+                                    <div class="form-label">% para este fio</div>
+                                    <input class="form-input mono" type="number" id="mix-pct" value="50" min="1" max="99" oninput="updateMixedPreview()">
+                                </div>
+                                <div style="flex:1">
+                                    <div class="form-label">% para o outro</div>
+                                    <input class="form-input mono" type="number" id="mix-pct2" value="50" readonly style="opacity:.6">
+                                </div>
+                            </div>
+                            <div id="mix-preview" style="display:none" class="mixed-result"></div>
+                            <button class="btn btn-purple btn-block" style="margin-top:8px" onclick="applyMixed()"><i class="fa fa-shuffle"></i>Aplicar Divisao</button>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:10px;margin-bottom:10px">
+                        <button class="btn btn-danger btn-sm" style="flex:1" onclick="undoAction()"><i class="fa fa-rotate-left"></i>Desfazer</button>
+                        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="resetCount()"><i class="fa fa-xmark"></i>Zerar</button>
+                    </div>
+                    <button class="btn btn-primary btn-block" style="margin-bottom:10px" onclick="saveCount()"><i class="fa fa-check"></i>Salvar Contagem</button>
+                    <div style="border-top:1px solid var(--border);padding-top:12px">
+                        <button class="close-day-btn open-state" id="close-day-btn" onclick="openCloseDaySheet()"><i class="fa fa-lock"></i>Fechar o Dia de Hoje</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ESTOQUE -->
+            <div class="page" id="pg-stock">
+                <div class="page-header fade-up">
+                    <div class="page-header-row">
+                        <div>
+                            <div class="page-title">Estoque</div>
+                            <div class="page-subtitle" id="stock-sub"></div>
+                        </div>
+                        <div class="page-actions"><button class="btn btn-primary btn-sm" onclick="openAddThread()"><i class="fa fa-plus"></i>Novo Fio</button></div>
+                    </div>
+                </div>
+                <div class="fade-up-2">
+                    <div class="search-wrap"><i class="fa fa-search"></i><input class="search-input" placeholder="Buscar fio..." id="st-srch" oninput="renderStock()"></div>
+                    <div class="chips-row" id="st-chips">
+                        <div class="chip active" onclick="setFilter('all',this)">Todos</div>
+                        <div class="chip" onclick="setFilter('normal',this)">Normal</div>
+                        <div class="chip" onclick="setFilter('low',this)">Baixo</div>
+                        <div class="chip" onclick="setFilter('critical',this)">Critico</div>
+                        <div class="chip" onclick="setFilter('stopped',this)">Parado</div>
+                    </div>
+                    <div id="st-list"></div>
+                </div>
+            </div>
+
+            <!-- CALENDARIO -->
+            <div class="page" id="pg-cal">
+                <div class="page-header fade-up">
+                    <div class="page-header-row">
+                        <div>
+                            <div class="page-title">Calendario</div>
+                            <div class="page-subtitle">Historico de contagens</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="fade-up-2">
+                    <div class="date-search-wrap"><i class="fa fa-calendar"></i><input class="date-search" type="date" id="date-search" onchange="jumpToDate()" title="Ir para data"></div>
+                    <div class="card" style="margin-bottom:12px">
+                        <div class="card-body">
+                            <div class="cal-nav">
+                                <button class="cal-nav-btn" onclick="prevM()"><i class="fa fa-chevron-left"></i></button>
+                                <div style="display:flex;align-items:center;gap:8px">
+                                    <div class="cal-month" id="cal-month-title"></div>
+                                    <div class="cal-view-toggle">
+                                        <div class="cal-vbtn active" id="vbtn-month" onclick="setCalView('month',this)">Mes</div>
+                                        <div class="cal-vbtn" id="vbtn-week" onclick="setCalView('week',this)">Sem.</div>
+                                    </div>
+                                </div>
+                                <button class="cal-nav-btn" onclick="nextM()"><i class="fa fa-chevron-right"></i></button>
+                            </div>
+                            <div id="cal-month-view">
+                                <div class="cal-grid" id="cal-grid">
+                                    <div class="cal-day-header">Dom</div>
+                                    <div class="cal-day-header">Seg</div>
+                                    <div class="cal-day-header">Ter</div>
+                                    <div class="cal-day-header">Qua</div>
+                                    <div class="cal-day-header">Qui</div>
+                                    <div class="cal-day-header">Sex</div>
+                                    <div class="cal-day-header">Sab</div>
+                                </div>
+                            </div>
+                            <div id="cal-week-view" style="display:none">
+                                <div class="week-view" id="week-grid"></div>
+                            </div>
+                            <div class="cal-legend">
+                                <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--bg3);border:1px solid var(--border)"></div>Com dados</div>
+                                <div class="cal-legend-item"><div class="cal-legend-dot" style="background:rgba(16,185,129,.1);border:1px solid var(--green-border)"></div>Fechado</div>
+                                <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--blue-dim);border:1px solid var(--blue-border)"></div>Hoje</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-label">Historico Recente</div>
+                    <div class="card">
+                        <div class="card-body" id="cal-hist"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RELATORIOS -->
+            <div class="page" id="pg-rep">
+                <div class="page-header fade-up">
+                    <div class="page-header-row">
+                        <div>
+                            <div class="page-title">Relatorios</div>
+                            <div class="page-subtitle">Exportacao e analises</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="fade-up-2 rep-layout">
+                    <div>
+                        <div class="card" style="margin-bottom:12px">
+                            <div class="card-header">
+                                <div class="card-title">Resumo Atual</div>
+                            </div>
+                            <div class="card-body">
+                                <div class="stat-grid" id="rep-stats"></div>
+                                <div class="chart-container"><canvas id="ch-rep"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="card" style="margin-bottom:12px">
+                            <div class="card-header">
+                                <div class="card-title">Tabela de Estoque</div><span class="badge badge-gray" id="rep-total-badge">0 fios</span>
+                            </div>
+                            <div class="card-body" style="padding:0">
+                                <div class="rep-table-wrap">
+                                    <table class="rep-table" id="rep-table-main">
+                                        <thead>
+                                            <tr>
+                                                <th>Fio</th>
+                                                <th>Estoque</th>
+                                                <th>Cons/dia</th>
+                                                <th>7 dias</th>
+                                                <th>Previsao</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="rep-table-body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Exportar PDF</div>
+                            </div>
+                            <div class="card-body">
+                                <div class="tabs" id="rep-tabs">
+                                    <div class="tab active" onclick="setPeriod('day',this)">Diario</div>
+                                    <div class="tab" onclick="setPeriod('week',this)">Semanal</div>
+                                    <div class="tab" onclick="setPeriod('month',this)">Mensal</div>
+                                </div>
+
+                                <!-- ★ BOTÃO RESUMO PARA COPIAR ★ -->
+                                <div class="report-card" onclick="openSheet('sh-resumo-fios')" style="border-color:var(--blue-border);background:var(--blue-dim);margin-bottom:4px">
+                                    <div class="report-icon" style="background:rgba(59,130,246,0.2);color:var(--blue)"><i class="fa fa-copy"></i></div>
+                                    <div class="report-info">
+                                        <div class="report-title" style="color:var(--blue)">Bom dia — Resumo para Copiar</div>
+                                        <div class="report-desc">Estoques atuais formatados para enviar</div>
+                                    </div>
+                                    <i class="fa fa-chevron-right report-arrow"></i>
+                                </div>
+
+                                <div class="report-card" onclick="genReport('full')">
+                                    <div class="report-icon" style="background:var(--blue-dim);color:var(--blue)"><i class="fa fa-chart-bar"></i></div>
+                                    <div class="report-info">
+                                        <div class="report-title">Relatorio Completo</div>
+                                        <div class="report-desc">Estoque, consumo, alertas e previsoes</div>
+                                    </div><i class="fa fa-chevron-right report-arrow"></i>
+                                </div>
+                                <div class="report-card" onclick="genReport('consumption')">
+                                    <div class="report-icon" style="background:var(--green-dim);color:var(--green)"><i class="fa fa-chart-line"></i></div>
+                                    <div class="report-info">
+                                        <div class="report-title">Historico de Consumo</div>
+                                        <div class="report-desc">Evolucao diaria e tendencias</div>
+                                    </div><i class="fa fa-chevron-right report-arrow"></i>
+                                </div>
+                                <div class="report-card" onclick="genReport('critical')">
+                                    <div class="report-icon" style="background:var(--red-dim);color:var(--red)"><i class="fa fa-triangle-exclamation"></i></div>
+                                    <div class="report-info">
+                                        <div class="report-title">Fios Criticos</div>
+                                        <div class="report-desc">Alertas e previsao de falta</div>
+                                    </div><i class="fa fa-chevron-right report-arrow"></i>
+                                </div>
+                                <div class="report-card" onclick="genReport('forecast')">
+                                    <div class="report-icon" style="background:var(--amber-dim);color:var(--amber)"><i class="fa fa-clock-rotate-left"></i></div>
+                                    <div class="report-info">
+                                        <div class="report-title">Previsao de Estoque</div>
+                                        <div class="report-desc">Duracao estimada por fio</div>
+                                    </div><i class="fa fa-chevron-right report-arrow"></i>
+                                </div>
+                                <div class="report-card" onclick="genReport('movements')">
+                                    <div class="report-icon" style="background:var(--purple-dim);color:var(--purple)"><i class="fa fa-arrow-right-arrow-left"></i></div>
+                                    <div class="report-info">
+                                        <div class="report-title">Movimentacoes</div>
+                                        <div class="report-desc">Entradas e saidas detectadas</div>
+                                    </div><i class="fa fa-chevron-right report-arrow"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Analise IIE</div><span class="badge badge-blue"><i class="fa fa-microchip"></i></span>
+                            </div>
+                            <div class="card-body">
+                                <div id="rep-ai" style="font-size:12px;line-height:1.7;color:var(--t2);margin-bottom:14px"></div>
+                                <div class="section-label">Por Fio</div>
+                                <div id="rep-thread-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <nav class="mob-nav" id="mob-nav">
+        <div class="mob-nav-inner">
+            <div class="mob-nav-item active" data-page="dash" onclick="navTo('dash',this)"><i class="fa fa-chart-pie"></i><span>Dashboard</span></div>
+            <div class="mob-nav-item" data-page="count" onclick="navTo('count',this)"><i class="fa fa-calculator"></i><span>Contagem</span></div>
+            <div class="mob-nav-item" data-page="stock" onclick="navTo('stock',this)"><i class="fa fa-boxes-stacked"></i><span>Estoque</span></div>
+            <div class="mob-nav-item" data-page="cal" onclick="navTo('cal',this)"><i class="fa fa-calendar-days"></i><span>Calendario</span></div>
+            <div class="mob-nav-item" data-page="rep" onclick="navTo('rep',this)"><i class="fa fa-file-pdf"></i><span>Relat.</span></div>
+        </div>
+    </nav>
+
+    <div class="overlay" id="overlay" onclick="closeSheet()"></div>
+
+    <!-- ADD/EDIT THREAD -->
+    <div class="sheet" id="sh-thread">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <div class="sheet-title" id="sh-thread-title">Cadastrar Fio</div>
+            <button class="icon-btn" onclick="closeSheet()"><i class="fa fa-xmark"></i></button>
+        </div>
+        <div class="sheet-body">
+            <div class="form-group"><label class="form-label">Nome do Fio</label><input class="form-input" id="inp-name" placeholder="Ex: Fio Nylon 0.25mm" autocomplete="off"></div>
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">Peso por Caixa (kg)</label><input class="form-input mono" type="number" id="inp-wpb" placeholder="25" step="0.1" min="0.1" oninput="updatePreview()"></div>
+                <div class="form-group"><label class="form-label">Caixas por Altura</label><input class="form-input mono" type="number" id="inp-bph" placeholder="4" step="1" min="1" oninput="updatePreview()"></div>
+            </div>
+            <div id="thread-preview" style="display:none;margin-bottom:12px">
+                <div class="card" style="border-color:var(--blue-border)">
+                    <div class="card-body" style="padding:10px 12px">
+                        <div class="section-label" style="margin-bottom:6px">Previsao de calculo</div>
+                        <div class="info-row"><span class="info-label">1 altura =</span><span class="info-value" id="prev-1h">--</span></div>
+                        <div class="info-row"><span class="info-label">Palete (10 alt.) =</span><span class="info-value" id="prev-pal">--</span></div>
+                    </div>
+                </div>
+            </div>
+            <div id="edit-recalc-warn" style="display:none;margin-bottom:12px">
+                <div class="alert-item alert-amber"><i class="fa fa-triangle-exclamation alert-icon"></i>
+                    <div>
+                        <div class="alert-title">Recalculo automatico</div>
+                        <div class="alert-desc">Ao alterar o peso por caixa, todas as contagens historicas deste fio serao recalculadas automaticamente.</div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-primary btn-block" id="sh-thread-save-btn" onclick="saveThread()"><i class="fa fa-check"></i>Salvar</button>
+            <button class="btn btn-danger btn-block" id="sh-thread-del-btn" style="margin-top:8px;display:none" onclick="deleteThread()"><i class="fa fa-trash"></i>Excluir Fio</button>
+        </div>
+    </div>
+
+    <!-- THREAD DETAIL -->
+    <div class="sheet" id="sh-detail">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <div>
+                <div class="sheet-title" id="det-name"></div>
+                <div style="font-size:11px;color:var(--t3);margin-top:2px" id="det-meta"></div>
+            </div>
+            <div style="display:flex;gap:6px">
+                <button class="icon-btn" onclick="editCurrentThread()" title="Editar"><i class="fa fa-pen" style="color:var(--blue)"></i></button>
+                <button class="icon-btn" onclick="closeSheet()"><i class="fa fa-xmark"></i></button>
             </div>
         </div>
-
-        <!-- SETTINGS -->
-        <div class="sheet" id="sh-settings">
-            <div class="sheet-handle"></div>
-            <div class="sheet-header">
-                <div class="sheet-title">Configuracoes</div><button class="icon-btn" onclick="closeSheet()"><i
-                        class="fa fa-xmark"></i></button>
+        <div class="sheet-body">
+            <div class="grid-2" style="margin-bottom:12px">
+                <div class="kpi blue" style="padding:12px">
+                    <div class="kpi-label">Estoque</div>
+                    <div class="kpi-value" style="font-size:20px" id="det-stock">--</div>
+                    <div class="kpi-sub">kg</div>
+                </div>
+                <div class="kpi green" style="padding:12px">
+                    <div class="kpi-label">Previsao</div>
+                    <div class="kpi-value" style="font-size:20px" id="det-days">--</div>
+                    <div class="kpi-sub">dias restantes</div>
+                </div>
             </div>
-            <div class="sheet-body">
-                <div class="section-label">Sistema</div>
-                <div class="info-row"><span class="info-label">Versao</span><span class="info-value"
-                        style="font-family:var(--mono)">v3.0 — Organizado</span></div>
-                <div class="info-row"><span class="info-label">Armazenamento</span><span class="info-value">IndexedDB
-                        Local</span></div>
-                <div class="info-row"><span class="info-label">Modo Offline</span><span
-                        class="badge badge-green">Ativo</span></div>
-                <div class="divider"></div>
-                <div class="section-label">Dados</div>
-                <button class="btn btn-secondary btn-block" style="margin-bottom:8px" onclick="exportData()"><i
-                        class="fa fa-download"></i>Exportar Backup JSON</button>
-                <button class="btn btn-danger btn-block" onclick="confirmClear()"><i class="fa fa-trash"></i>Limpar Todos os
-                    Dados</button>
+            <div class="card" style="margin-bottom:12px">
+                <div class="card-body" style="padding:12px">
+                    <div class="section-label">Analise IIE</div>
+                    <div class="info-row"><span class="info-label">Consumo medio/dia</span><span class="info-value" id="det-avg">--</span></div>
+                    <div class="info-row"><span class="info-label">Media semanal</span><span class="info-value" id="det-wkly">--</span></div>
+                    <div class="info-row"><span class="info-label">Status</span><span id="det-badge"></span></div>
+                    <div class="info-row"><span class="info-label">Classificacao</span><span class="info-value" id="det-cls">--</span></div>
+                </div>
             </div>
+            <div class="card" style="margin-bottom:12px">
+                <div class="card-body" style="padding:12px">
+                    <div class="section-label">Evolucao do Estoque</div>
+                    <div class="chart-container" style="height:120px"><canvas id="det-chart"></canvas></div>
+                </div>
+            </div>
+            <button class="btn btn-primary btn-block" onclick="startCountForThread();closeSheet()"><i class="fa fa-calculator"></i>Iniciar Contagem</button>
         </div>
+    </div>
 
-        <div class="toast" id="toast"><i class="fa fa-check"></i><span id="toast-txt"></span></div>
+    <!-- CALENDAR DAY -->
+    <div class="sheet" id="sh-calday">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <div>
+                <div class="sheet-title" id="calday-title"></div>
+                <div id="calday-status" style="margin-top:4px"></div>
+            </div>
+            <button class="icon-btn" onclick="closeSheet()"><i class="fa fa-xmark"></i></button>
+        </div>
+        <div class="sheet-body" id="calday-body"></div>
+    </div>
 
-        <script src="script.js">
+    <!-- ALERTS -->
+    <div class="sheet" id="sh-alerts">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <div class="sheet-title">Central de Alertas</div>
+            <button class="icon-btn" onclick="closeSheet()"><i class="fa fa-xmark"></i></button>
+        </div>
+        <div class="sheet-body" id="sh-alerts-body"></div>
+    </div>
 
-        </script>
-    </body>
+    <!-- CLOSE DAY -->
+    <div class="sheet" id="sh-closeday">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <div class="sheet-title">Fechar Dia</div>
+            <button class="icon-btn" onclick="closeSheet()"><i class="fa fa-xmark"></i></button>
+        </div>
+        <div class="sheet-body">
+            <div class="alert-item alert-green" style="margin-bottom:12px"><i class="fa fa-circle-check alert-icon"></i>
+                <div>
+                    <div class="alert-title">Confirmar fechamento</div>
+                    <div class="alert-desc" id="cd-date-lbl"></div>
+                </div>
+            </div>
+            <p style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:12px">Ao fechar o dia, as contagens ficam definitivas. Amanha a contagem comecara zerada, e o consumo sera calculado automaticamente.</p>
+            <div id="cd-summary" style="margin-bottom:14px"></div>
+            <button class="btn btn-success btn-block" onclick="confirmCloseDay()"><i class="fa fa-lock"></i>Confirmar Fechamento</button>
+            <button class="btn btn-ghost btn-block" style="margin-top:8px" onclick="closeSheet()">Cancelar</button>
+        </div>
+    </div>
 
-    </html>
+    <!-- SETTINGS -->
+    <div class="sheet" id="sh-settings">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <div class="sheet-title">Configuracoes</div>
+            <button class="icon-btn" onclick="closeSheet()"><i class="fa fa-xmark"></i></button>
+        </div>
+        <div class="sheet-body">
+            <div class="section-label">Sistema</div>
+            <div class="info-row"><span class="info-label">Versao</span><span class="info-value" style="font-family:var(--mono)">v3.2 — Organizado</span></div>
+            <div class="info-row"><span class="info-label">Armazenamento</span><span class="info-value">IndexedDB Local</span></div>
+            <div class="info-row"><span class="info-label">Modo Offline</span><span class="badge badge-green">Ativo</span></div>
+            <div class="divider"></div>
+            <div class="section-label">Dados</div>
+            <button class="btn btn-secondary btn-block" style="margin-bottom:8px" onclick="exportData()"><i class="fa fa-download"></i>Exportar Backup JSON</button>
+            <button class="btn btn-danger btn-block" onclick="confirmClear()"><i class="fa fa-trash"></i>Limpar Todos os Dados</button>
+        </div>
+    </div>
+
+    <!-- ★ SHEET: RESUMO BOM DIA PARA COPIAR ★ -->
+    <div class="sheet" id="sh-resumo-fios">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <div>
+                <div class="sheet-title">Bom dia — Resumo</div>
+                <div style="font-size:11px;color:var(--t3);margin-top:2px">Pronto para copiar e enviar</div>
+            </div>
+            <button class="icon-btn" onclick="closeSheet()"><i class="fa fa-xmark"></i></button>
+        </div>
+        <div class="sheet-body">
+            <div style="font-size:11px;color:var(--t3);margin-bottom:10px;line-height:1.5">
+                Estoques calculados agora com base na ultima contagem de cada fio.
+            </div>
+            <div id="resumo-fios-content"
+                style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px;font-family:var(--mono);font-size:12px;line-height:2;color:var(--t1);white-space:pre-wrap;word-break:break-word;min-height:200px">
+            </div>
+            <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="copiarResumoFios()">
+                <i class="fa fa-copy"></i>Copiar Tudo
+            </button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"><i class="fa fa-check"></i><span id="toast-txt"></span></div>
+
+    <script src="script.js"></script>
+
+    <!-- ★ SCRIPT: RESUMO BOM DIA ★ -->
+    <script>
+    // Mapeamento dos fios do resumo.
+    // match: nome exato no banco (ou array de nomes para somar) | null = valor fixo
+    // fixedKg: valor fixo (usa quando match é null)
+    // suffix: texto extra após o kg
+    // isSeparator: linha de categoria sem kg
+    const RESUMO_FIOS = [
+        { label: 'Nylon Trama teste (china)', match: null,                                                        fixedKg: 0                        },
+        { label: 'Nylon Trama',               match: 'Nylon Trama',                                              fixedKg: null                     },
+        { label: 'Nylon Urdume',              match: 'Nylon Urdume',                                             fixedKg: null                     },
+        { label: 'Nylon Urdume Balão',        match: null,                                                        fixedKg: 364, suffix: ' (em revisao)' },
+        { label: 'Multifilamento',            isSeparator: true                                                                                     },
+        { label: 'Fio Clemente',              match: ['Clemente 450/90 IND','Clemente 450/90 XV','Clemente 450 Gaiola SSM'], fixedKg: null          },
+        { label: 'Trama',                     match: ['SSM Trama','Trama / Urdume'],                              fixedKg: null, suffix: ' bobinada' },
+        { label: 'Trama',                     match: null,                                                        fixedKg: 0,   suffix: ' texturizada' },
+        { label: 'Urdume',                    match: 'SSM Urdume',                                               fixedKg: null                     },
+        { label: 'Bege Juta TB',              match: 'Bege Juta TB',                                             fixedKg: null, suffix: ' ++'       },
+    ];
+
+    function _getKgByMatch(matchNames) {
+        if (!matchNames) return null;
+        const names = Array.isArray(matchNames) ? matchNames : [matchNames];
+        let total = 0;
+        names.forEach(n => {
+            const t = threads.find(x => x.name.trim() === n.trim());
+            if (t) { const lat = IIE.latest(t.id); if (lat) total += lat.stockKg; }
+        });
+        return total;
+    }
+
+    function gerarResumoFios() {
+        const now = new Date();
+        const dataStr = now.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+        let linhas = ['Bom dia a todos !!!!', dataStr, ''];
+
+        RESUMO_FIOS.forEach(item => {
+            if (item.isSeparator) {
+                linhas.push('', item.label);
+                return;
+            }
+            let kg = item.fixedKg;
+            if (kg === null && item.match) kg = _getKgByMatch(item.match);
+            const kgStr = (kg === null || kg === undefined) ? '-- kg' : Math.round(kg).toLocaleString('pt-BR') + ' kg';
+            const suffix = item.suffix || '';
+            linhas.push(item.label + ' - ' + kgStr + suffix);
+        });
+
+        return linhas.join('\n');
+    }
+
+    // Intercepta openSheet para montar o conteúdo antes de abrir
+    const _origOpen = window.openSheet;
+    window.openSheet = function(id) {
+        if (id === 'sh-resumo-fios') {
+            const el = document.getElementById('resumo-fios-content');
+            if (el) el.textContent = gerarResumoFios();
+        }
+        _origOpen(id);
+    };
+
+    async function copiarResumoFios() {
+        const texto = document.getElementById('resumo-fios-content')?.textContent || '';
+        try {
+            await navigator.clipboard.writeText(texto);
+            toast('Copiado para a area de transferencia!');
+        } catch {
+            toast('Erro ao copiar — selecione e copie manualmente', 'err');
+        }
+    }
+    </script>
+
+</body>
+</html>
