@@ -1,7 +1,6 @@
-
 /* ═══════════════════════════════════════════════════════════════
    IIE — Industrial Intelligence Engine
-   Embalagens Tatuí — Estoque de Fios v3.1
+   Embalagens Tatuí — Estoque de Fios v3.2
    SCRIPT COMPLETO E DEFINITIVO
 ═══════════════════════════════════════════════════════════════ */
 
@@ -56,8 +55,6 @@ const dbAll = (s) => safeTx(s, 'readonly', os => os.getAll());
 const dbPut = (s, d) => safeTx(s, 'readwrite', os => os.put(d));
 const dbDel = (s, k) => safeTx(s, 'readwrite', os => os.delete(k));
 
-/* dbPutBatch: insere vários registros numa transação e retorna
-   os objetos com id preenchido */
 async function dbPutBatch(store, records) {
     await ensureDB();
     if (!records.length) return [];
@@ -96,14 +93,10 @@ let activePage = 'dash';
  */
 function toYMD(input) {
     if (!input) return null;
-    // Já no formato correto
     if (typeof input === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(input)) return input;
-    // ISO string ou qualquer string com data
     const d = (input instanceof Date) ? input : new Date(
-        // Força parse local: substitui T... por hora local noon para evitar
-        // que "2025-05-01" seja interpretado como UTC midnight e vire 30/04
         typeof input === 'string'
-            ? input.replace(/T.*$/, 'T12:00:00')  // mantém dia local
+            ? input.replace(/T.*$/, 'T12:00:00')
             : input
     );
     if (isNaN(d.getTime())) return null;
@@ -113,7 +106,7 @@ function toYMD(input) {
     return `${y}-${m}-${dy}`;
 }
 
-// Data de hoje no fuso local
+// Data de hoje no fuso local — usa o relógio real do dispositivo
 const today = () => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -150,8 +143,7 @@ const fmtN = n => (n === null || n === undefined || isNaN(n)) ? '--' : parseFloa
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
 const vib = p => navigator.vibrate && navigator.vibrate(p || 20);
 
-/* Normaliza o array counts em memória:
-   garante que c.date seja sempre YYYY-MM-DD */
+/* Normaliza o array counts em memória */
 function normalizeCounts() {
     counts = counts.map(c => ({ ...c, date: toYMD(c.date) || c.date }));
 }
@@ -220,11 +212,9 @@ function closeSheet() {
 
 /* ══════════════════════════════════════════════════════════════
    IIE — Industrial Intelligence Engine
-   Toda comparação de data usa toYMD() para garantir uniformidade.
 ══════════════════════════════════════════════════════════════ */
 const IIE = {
 
-    /* Contagens de um fio ordenadas por data (mais antigas primeiro) */
     tc(tid) {
         return counts
             .filter(c => c.threadId === tid)
@@ -282,7 +272,6 @@ const IIE = {
         return t;
     },
 
-    /* Consumo de hoje = estoque de ontem - estoque de hoje (se positivo) */
     todayCons() {
         const t = today();
         const ps = subtractDay(t);
@@ -309,7 +298,6 @@ const IIE = {
         return a;
     },
 
-    /* Consumo diário dos últimos N dias somado para todos os fios */
     dailyN(n) {
         return lastNDays(n).map(day => {
             const ps = subtractDay(day);
@@ -324,14 +312,12 @@ const IIE = {
     },
     daily7() { return this.dailyN(7); },
 
-    /* Conjunto de todas as datas que têm pelo menos uma contagem */
     allCountDates() {
         const s = new Set();
         counts.forEach(c => { if (c.date) s.add(c.date); });
         return s;
     },
 
-    /* Contagens de um dia específico */
     countsForDay(dateStr) {
         const d = toYMD(dateStr) || dateStr;
         return counts.filter(c => c.date === d);
@@ -518,7 +504,7 @@ function renderStock() {
     const stC = { normal: 'badge-blue', low: 'badge-amber', critical: 'badge-red', stopped: 'badge-gray', 'no-data': 'badge-gray' };
     el.innerHTML = list.map(t => {
         const st = IIE.status(t.id), lat = IIE.latest(t.id), d = IIE.daysLeft(t.id);
-        return `<div class="thread-item status-${st}" onclick="openDetail('${t.id}')"><div class="thread-avatar"><i class="fa fa-wave-square"></i></div><div class="thread-info"><div class="thread-name">${t.name}</div><div class="thread-meta">${t.weightPerBox} kg/cx &bull; ${t.boxesPerHeight} cx/alt</div></div><div class="thread-right"><div class="thread-stock">${lat ? fmtN(lat.stockKg) : '--'}</div><div class="thread-days">${d !== null ? d + ' dias' : 'sem previsao'}</div><div style="margin-top:3px"><span class="badge ${stC[st]}">${stL[st]}</span></div></div></div>`;
+        return `<div class="thread-item status-${t.status || st}" onclick="openDetail('${t.id}')"><div class="thread-avatar"><i class="fa fa-wave-square"></i></div><div class="thread-info"><div class="thread-name">${t.name}</div><div class="thread-meta">${t.weightPerBox} kg/cx &bull; ${t.boxesPerHeight} cx/alt</div></div><div class="thread-right"><div class="thread-stock">${lat ? fmtN(lat.stockKg) : '--'}</div><div class="thread-days">${d !== null ? d + ' dias' : 'sem previsao'}</div><div style="margin-top:3px"><span class="badge ${stC[st]}">${stL[st]}</span></div></div></div>`;
     }).join('');
 }
 
@@ -814,15 +800,16 @@ function clearCntIface() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   CALENDÁRIO — CORRIGIDO DEFINITIVAMENTE
+   CALENDÁRIO
+   - Sempre inicializa no mês ATUAL (hoje), não no seed histórico
+   - O usuário pode navegar livremente para meses passados
    - allCountDates() garante datas normalizadas no Set
    - openCalDay() normaliza a data antes de qualquer operação
-   - Mês inicial detecta automaticamente onde há dados
 ══════════════════════════════════════════════════════════════ */
 
 function renderCal() {
     const now = new Date();
-    // Inicializa calYear/calMonth apenas se ainda não foram setados pelo usuário
+    // CORREÇÃO: sempre inicia no mês real de hoje se ainda não navegou
     if (calYear === undefined || calYear === null) {
         calYear = now.getFullYear();
         calMonth = now.getMonth();
@@ -830,7 +817,6 @@ function renderCal() {
     const dsEl = document.getElementById('date-search');
     if (dsEl) dsEl.value = '';
 
-    // Garante visibilidade correta das views
     const mv = document.getElementById('cal-month-view');
     const wv = document.getElementById('cal-week-view');
     if (mv) mv.style.display = calView === 'month' ? 'block' : 'none';
@@ -860,24 +846,20 @@ function renderMonthView() {
     const grid = document.getElementById('cal-grid');
     if (!grid) return;
 
-    // Remove dias anteriores, mantém os 7 cabeçalhos (Dom–Sab)
     while (grid.children.length > 7) grid.removeChild(grid.lastChild);
 
-    const firstDow = new Date(calYear, calMonth, 1).getDay(); // 0=Dom
+    const firstDow = new Date(calYear, calMonth, 1).getDay();
     const daysInM = new Date(calYear, calMonth + 1, 0).getDate();
     const todayStr = today();
 
-    // Set de datas com contagens (já normalizadas em memória)
     const dwd = IIE.allCountDates();
 
-    // Células vazias antes do dia 1
     for (let i = 0; i < firstDow; i++) {
         const e = document.createElement('div');
         e.className = 'cal-day empty';
         grid.appendChild(e);
     }
 
-    // Dias do mês
     for (let d = 1; d <= daysInM; d++) {
         const ds = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         const el = document.createElement('div');
@@ -904,7 +886,6 @@ function renderWeekView() {
     const todayStr = today();
     const dwd = IIE.allCountDates();
 
-    // Semana da data calYear/calMonth/1 (timezone-safe)
     const refDate = new Date(calYear, calMonth, 1);
     const dow = refDate.getDay();
     const wkStart = new Date(calYear, calMonth, 1 - dow);
@@ -943,9 +924,7 @@ const nextM = () => {
     if (calView === 'month') renderMonthView(); else renderWeekView();
 };
 
-/* Abre o painel lateral de um dia específico */
 function openCalDay(ds) {
-    // Normaliza sempre: garante YYYY-MM-DD mesmo que venha com timezone
     const nd = toYMD(ds) || ds;
     const [y, m, d] = nd.split('-');
     document.getElementById('calday-title').textContent = `${d}/${m}/${y}`;
@@ -955,7 +934,7 @@ function openCalDay(ds) {
         : '<span class="badge badge-amber">Em aberto</span>';
 
     const body = document.getElementById('calday-body');
-    const dc = IIE.countsForDay(nd);    // usa date normalizada
+    const dc = IIE.countsForDay(nd);
 
     let html = '';
     if (dc.length) {
@@ -1032,7 +1011,7 @@ async function saveCalEdit(tid, ds) {
     toast('Salvo: ' + fmtKg(kg));
     renderMonthView();
     renderCalHist();
-    openCalDay(nd);  // recarrega o painel
+    openCalDay(nd);
 }
 
 function renderCalHist() {
@@ -1232,7 +1211,7 @@ async function genReport(type) {
     doc.setFontSize(7); doc.setTextColor(148, 163, 184);
     doc.line(10, 287, W - 10, 287);
     doc.text('Embalagens Tatui — Sistema IIE de Controle de Estoque', 10, 292);
-    doc.text(`${ds} | v3.1`, W - 10, 292, { align: 'right' });
+    doc.text(`${ds} | v3.2`, W - 10, 292, { align: 'right' });
     doc.save(`tatui_fios_${type}_${repPeriod}_${today()}.pdf`);
     toast('PDF exportado com sucesso');
 }
@@ -1354,7 +1333,6 @@ async function seedHistoricalData() {
         ['2025-05-21', [12470, 3755, 364, 120, 960, 314, 109, 356, 352, 2396, 106, 994, 1090, 8421, 1014, 0, 616, 594]],
     ];
 
-    // Carregar existentes e montar chave threadId|date para deduplicação
     const existingCounts = await dbAll('counts');
     const existingKeys = new Set(
         existingCounts.map(c => `${c.threadId}|${toYMD(c.date) || c.date}`)
@@ -1362,7 +1340,7 @@ async function seedHistoricalData() {
 
     const toInsert = [];
     for (const [rawDate, values] of historicalData) {
-        const nd = rawDate; // já é YYYY-MM-DD estrito
+        const nd = rawDate;
         for (let i = 0; i < allThreads.length && i < values.length; i++) {
             const thread = allThreads[i];
             const kg = values[i];
@@ -1371,7 +1349,7 @@ async function seedHistoricalData() {
             const totalBoxes = Math.round(kg / thread.weightPerBox);
             toInsert.push({
                 threadId: thread.id,
-                date: nd,          // YYYY-MM-DD — nunca ISO timestamp
+                date: nd,
                 heights: 0,
                 looseBoxes: totalBoxes,
                 production: 0,
@@ -1394,17 +1372,10 @@ async function seedHistoricalData() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   INIT — Sequência definitiva:
-   1. Abre banco
-   2. Seed de fios (só na 1ª vez)
-   3. Carrega threads
-   4. Carrega counts e NORMALIZA datas
-   5. Carrega daysMeta
-   6. Seed histórico (só insere o que falta)
-   7. Recarrega counts do banco (garante tudo em memória)
-   8. Normaliza counts novamente (paranoia produtiva)
-   9. Seta calYear/calMonth para o mês com mais dados
-   10. Renderiza
+   INIT — Sequência definitiva
+   CORREÇÃO PRINCIPAL: calYear/calMonth são sempre setados para
+   HOJE (data real do dispositivo), não para o dado mais recente
+   do seed histórico. O usuário navega para o passado quando quiser.
 ══════════════════════════════════════════════════════════════ */
 async function init() {
     await initDB();
@@ -1412,37 +1383,25 @@ async function init() {
 
     threads = await dbAll('threads');
 
-    // Carrega e normaliza counts
     const rawCounts = await dbAll('counts');
     counts = rawCounts.map(c => ({ ...c, date: toYMD(c.date) || c.date }));
 
-    // Carrega daysMeta
     const dArr = await dbAll('days');
     daysMeta = {};
     dArr.forEach(d => { daysMeta[toYMD(d.date) || d.date] = d; });
 
-    // Seed histórico (insere apenas o que falta)
     await seedHistoricalData();
 
-    // Recarrega counts do banco para garantir sincronização total
     const allCounts = await dbAll('counts');
     counts = allCounts.map(c => ({ ...c, date: toYMD(c.date) || c.date }));
 
     console.log(`[IIE] Pronto: ${threads.length} fios | ${counts.length} contagens`);
 
-    // ── Determina qual mês mostrar no calendário ──
-    // Vai para o mês da contagem mais recente (não necessariamente hoje)
+    // ── CORREÇÃO: calendário sempre abre no mês atual (hoje) ──
+    // Dados históricos de 2025 ficam acessíveis via navegação (botão ‹ )
     const now = new Date();
     calYear = now.getFullYear();
     calMonth = now.getMonth();
-    if (counts.length) {
-        const newest = [...counts].sort((a, b) => b.date.localeCompare(a.date))[0];
-        if (newest && newest.date) {
-            const [y, m] = newest.date.split('-').map(Number);
-            calYear = y;
-            calMonth = m - 1;
-        }
-    }
 
     // UI inicial
     const secAlt = document.getElementById('sec-alturas');
